@@ -1,0 +1,52 @@
+{% extends 'core/base.html' %}
+
+{% block title %}About Serendegree{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <h1 class="mb-4">About Serendegree</h1>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Our Mission</h2>
+                    <p>Serendegree aims to streamline the community college transfer process by helping students discover four-year university programs that best match their completed coursework. We believe in making higher education more accessible and equitable by reducing advisor knowledge gaps and empowering students to make informed decisions about their academic future.</p>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">How It Works</h2>
+                    <p>Our system uses advanced natural language processing and machine learning techniques to analyze your course history:</p>
+                    <ol>
+                        <li class="mb-2"><strong>Course Analysis:</strong> We convert your completed courses into mathematical representations (vectors) that capture their academic content and learning objectives.</li>
+                        <li class="mb-2"><strong>Program Matching:</strong> We compare your course profile with university major programs to find the best matches based on content similarity.</li>
+                        <li class="mb-2"><strong>AI Explanations:</strong> Our AI system provides clear, personalized explanations for why each program matches your academic background.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Benefits</h2>
+                    <ul>
+                        <li class="mb-2">Discover programs you might not have considered</li>
+                        <li class="mb-2">Understand how your courses align with different majors</li>
+                        <li class="mb-2">Make data-driven decisions about your academic path</li>
+                        <li class="mb-2">Save time and money by choosing the right program</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Get Started</h2>
+                    <p>Ready to discover your ideal university major? Upload your course schedule and let our AI help you find the perfect match.</p>
+                    <a href="{% url 'upload_schedule' %}" class="btn btn-primary">Upload Your Schedule</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

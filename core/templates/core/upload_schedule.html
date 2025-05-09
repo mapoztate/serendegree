@@ -1,0 +1,219 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Upload Your Schedule - Serendegree{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <h1 class="mb-4">Upload Your Course Schedule</h1>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Instructions</h5>
+                    <p>Please prepare your course schedule in a CSV file with the following format:</p>
+                    <pre class="bg-light p-3 rounded">course_code
+CS101
+MATH201
+ENG102
+...</pre>
+                    <p class="mb-0">Each row should contain a course code that you've completed.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="uploadForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="scheduleFile" class="form-label">Select your schedule CSV file</label>
+                            <input type="file" class="form-control" id="scheduleFile" name="file" accept=".csv" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Upload and Get Recommendations</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="results" class="mt-4" style="display: none;">
+                <ul class="nav nav-tabs" id="recommendationTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="programs-tab" data-bs-toggle="tab" data-bs-target="#programs" type="button" role="tab">
+                            Program Recommendations
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="courses-tab" data-bs-toggle="tab" data-bs-target="#courses" type="button" role="tab">
+                            Course Equivalencies
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content mt-3" id="recommendationTabContent">
+                    <div class="tab-pane fade show active" id="programs" role="tabpanel">
+                        <div id="programsList"></div>
+                    </div>
+                    <div class="tab-pane fade" id="courses" role="tabpanel">
+                        <div id="coursesList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('uploadForm');
+    if (!form) {
+        console.error('Upload form not found');
+        return;
+    }
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        console.log('Form submitted');
+        
+        const formData = new FormData(this);
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        try {
+            console.log('Uploading schedule...');
+            // Upload schedule
+            const uploadResponse = await fetch('/api/schedules/upload-schedule/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData,
+                credentials: 'same-origin'
+            });
+            
+            console.log('Upload response:', uploadResponse);
+            const uploadData = await uploadResponse.json();
+            console.log('Upload data:', uploadData);
+            
+            if (!uploadResponse.ok) {
+                throw new Error(uploadData.error || 'Failed to upload schedule');
+            }
+            
+            // Get program recommendations
+            console.log('Getting program recommendations...');
+            const programResponse = await fetch(`/api/schedules/${uploadData.schedule_id}/recommend-programs/`, {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (!programResponse.ok) {
+                const text = await programResponse.text();
+                console.error('Program response:', text);
+                throw new Error('Failed to get program recommendations');
+            }
+            
+            const programRecommendations = await programResponse.json();
+            console.log('Program recommendations:', programRecommendations);
+            
+            // Display program results
+            const programsList = document.getElementById('programsList');
+            programsList.innerHTML = programRecommendations.map(rec => `
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h3 class="card-title">${rec.program.name}</h3>
+                        <h6 class="card-subtitle mb-2 text-muted">${rec.program.institution}</h6>
+                        <p class="card-text">
+                            <strong>Match Score:</strong> ${(rec.similarity_score * 100).toFixed(1)}%
+                        </p>
+                        <p class="card-text">${rec.explanation}</p>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Get course recommendations for each program
+            const file = document.getElementById('scheduleFile').files[0];
+            const reader = new FileReader();
+            
+            reader.onload = async function(e) {
+                try {
+                    const courses = e.target.result
+                        .split('\n')
+                        .filter(line => line.trim())
+                        .slice(1); // Skip header
+                    
+                    // Get course recommendations for each recommended program's institution
+                    const allCourseRecommendations = [];
+                    for (const rec of programRecommendations) {
+                        console.log(`Getting course recommendations for ${rec.program.institution}...`);
+                        const courseResponse = await fetch('/api/recommend/courses/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrfToken,
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                courses: courses,
+                                target_institution: rec.program.institution,
+                                num_recommendations: 3
+                            })
+                        });
+                        
+                        if (!courseResponse.ok) {
+                            const text = await courseResponse.text();
+                            console.error('Course response:', text);
+                            continue;
+                        }
+                        
+                        const courseRecs = await courseResponse.json();
+                        allCourseRecommendations.push({
+                            institution: rec.program.institution,
+                            recommendations: courseRecs
+                        });
+                    }
+                    
+                    // Display course results grouped by institution
+                    const coursesList = document.getElementById('coursesList');
+                    coursesList.innerHTML = allCourseRecommendations.map(institutionRecs => `
+                        <div class="institution-recommendations mb-4">
+                            <h4 class="mb-3">${institutionRecs.institution}</h4>
+                            ${institutionRecs.recommendations.map(rec => `
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Your Course: ${rec.source_course}</h5>
+                                        <div class="recommendations">
+                                            ${rec.recommendations.map(match => `
+                                                <div class="recommendation-item border-left pl-3 mb-3">
+                                                    <h6>${match.course_code}: ${match.title}</h6>
+                                                    <p class="mb-1"><small>${match.description}</small></p>
+                                                    <p class="mb-0 text-muted">
+                                                        <strong>Match Score:</strong> ${(match.similarity_score * 100).toFixed(1)}%
+                                                    </p>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('results').style.display = 'block';
+                } catch (error) {
+                    console.error('Error processing recommendations:', error);
+                    alert('Error: ' + error.message);
+                }
+            };
+            
+            reader.onerror = function(error) {
+                console.error('Error reading file:', error);
+                alert('Error reading file: ' + error.message);
+            };
+            
+            reader.readAsText(file);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error: ' + error.message);
+        }
+    });
+});
+</script>
+{% endblock %} 

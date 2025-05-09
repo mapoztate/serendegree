@@ -1,0 +1,73 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Serendegree - Find Your Perfect Major{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-4 mb-4">Discover Your Perfect University Major</h1>
+                <p class="lead mb-4">Upload your community college courses and let our AI-powered system match you with the best university programs based on your academic journey.</p>
+                <a href="{% url 'upload_schedule' %}" class="btn btn-light btn-lg">Get Started</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <div class="card feature-card">
+                <div class="card-body">
+                    <h3 class="card-title">Smart Matching</h3>
+                    <p class="card-text">Our AI analyzes your completed courses to find university programs that best match your academic background.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card feature-card">
+                <div class="card-body">
+                    <h3 class="card-title">Personalized Insights</h3>
+                    <p class="card-text">Get detailed explanations of why each program matches your coursework and potential career paths.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card feature-card">
+                <div class="card-body">
+                    <h3 class="card-title">Easy Upload</h3>
+                    <p class="card-text">Simply upload your course history in CSV format, and we'll handle the rest.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto text-center">
+            <h2 class="mb-4">How It Works</h2>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="p-3">
+                        <h4>1. Upload Courses</h4>
+                        <p>Upload your completed community college courses.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3">
+                        <h4>2. AI Analysis</h4>
+                        <p>Our system analyzes your academic profile.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3">
+                        <h4>3. Get Matches</h4>
+                        <p>Receive personalized university program recommendations.</p>
+                    </div>
+                </div>
+            </div>
+            <a href="{% url 'upload_schedule' %}" class="btn btn-primary btn-lg mt-4">Start Your Journey</a>
+        </div>
+    </div>
+</div>
+{% endblock %} 
